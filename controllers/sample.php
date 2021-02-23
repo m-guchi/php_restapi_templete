@@ -14,7 +14,7 @@ class SampleController
     public function post():array
     {
         parse_str(file_get_contents('php://input'),$post);
-        if(array_key_exists("id"),$post){
+        if(array_key_exists("id",$post)){
             $db = new DB();
             $sql = "INSERT INTO table (id) VALUES (:id)";
             $sth = $db->pdo()->prepare($sql);

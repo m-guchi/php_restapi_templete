@@ -1,10 +1,12 @@
 <?php
 
+include(__DIR__ . "/DB.php");
+
 function htmlescape($val){
     return htmlspecialchars($val);
 }
 
-preg_match('|'.dirname($_SERVER["SCRIPT_NAME"]).'\([\w%/]*)|', $_SERVER["REQUEST_URI"], $matches);
+preg_match('|'.dirname($_SERVER["SCRIPT_NAME"]).'/([\w%/]*)|', $_SERVER["REQUEST_URI"], $matches);
 $paths = explode('/',$matches[1]);
 $file = array_shift($paths);
 $params = array_map("htmlescape",$paths);
