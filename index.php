@@ -20,6 +20,7 @@ if(file_exists($file_path)){
     $response = json_encode($object->$method_name(...$params));
     $response_code = $object->code ?? 200;
 
+    header("Access-Control-Allow-Origin: *"); //本番時は消す
     header("Content-Type: application/json; charset=utf-8", true, $response_code);
     echo $response;
 }else{
