@@ -27,4 +27,13 @@ class DB
         $sth->execute();
         return $sth->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    function select_for_id($sql, $id)
+    {
+        $pdo = $this->pdo();
+        $sth = $pdo->prepare($sql);
+        $sth->bindValue(":id",$id);
+        $sth->execute();
+        return $sth->fetch(PDO::FETCH_ASSOC);
+    }
 }
