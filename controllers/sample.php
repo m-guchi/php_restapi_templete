@@ -8,10 +8,10 @@ class SampleController
     {
         $db = new DB();
         if($this->is_set($id)){
-            $sql = "SELECT * FROM table WHERE id = :id";
+            $sql = "SELECT * FROM sample_table WHERE id = :id";
             return $db->select_for_id($sql, $id);
         }else{
-            $sql = "SELECT * FROM table";
+            $sql = "SELECT * FROM sample_table";
             return $db->select($sql);
         }
     }
@@ -21,7 +21,7 @@ class SampleController
         $post = $this->response_body();
         if(array_key_exists("id",$post)){
             $db = new DB();
-            $sql = "INSERT INTO table (id) VALUES (:id)";
+            $sql = "INSERT INTO sample_table (id) VALUES (:id)";
             $sth = $db->pdo()->prepare($sql);
             $sth->bindValue(":id",$post["id"]);
             $res = $sth->execute();
@@ -38,7 +38,7 @@ class SampleController
             $original_data = $this->get($id);
             $put = array_merge($original_data, $put);
             $db = new DB();
-            $sql = "UPDATE table value=:value WHERE id=:id";
+            $sql = "UPDATE sample_table value=:value WHERE id=:id";
             $sth = $db->pdo()->prepare($sql);
             $sth->bindValue(":value",$put["value"]);
             $sth->bindValue(":id",$put["id"]);
