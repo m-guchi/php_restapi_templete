@@ -1,6 +1,6 @@
 <?php
 
-include(__DIR__ . "/DB.php");
+include(__DIR__ . "/../DB.php");
 
 function htmlescape($val){
     return htmlspecialchars($val);
