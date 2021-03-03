@@ -15,7 +15,6 @@ class SampleController
     public function get($id=null):array
     {
         $db = new DB();
-        echo $_GET["data"];
         if($this->is_set($id)){
             return $this->getById($db, $id);
         }else{
