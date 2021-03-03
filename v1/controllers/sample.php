@@ -4,35 +4,67 @@ class SampleController
 {
     public $code = 200;
     public $url;
+    public $request_body;
 
     function __construct()
     {
-        $this->url = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://').$_SERVER['HTTP_HOST']."/php_restapi_templete/v1/sample/";
+        $this->url = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://').$_SERVER['HTTP_HOST'].mb_substr($_SERVER['SCRIPT_NAME'],0,-9).basename(__FILE__, ".php")."/";
+        $this->request_body = json_decode(mb_convert_encoding(file_get_contents('php://input'),"UTF8","ASCII,JIS,UTF-8,EUC-JP,SJIS-WIN"),true);
     }
 
     public function get($id=null):array
     {
+        echo $_GET["data"];
         $db = new DB();
         if($this->is_set($id)){
-            $sql = "SELECT * FROM sample_table WHERE id = :id";
-            return $db->select_for_id($sql, $id);
+            return $this->getById($db, $id);
+        }else{
+            return $this->getAll($db);
         }
-        $sql = "SELECT * FROM sample_table";
-        $data = $db->select($sql);
-        if(!empty($data)){
-            $this->code = 404;
+    }
+
+    private function getById($db,$id):array
+    {
+        $sql = "SELECT * FROM sample_table WHERE id = :id";
+        $sth = $db->pdo()->prepare($sql);
+        $sth->bindValue(":id",$id);
+        $res = $sth->execute();
+        if($res){
+            $data = $sth->fetch(PDO::FETCH_ASSOC);
+            if(!empty($data)){
+                return $data;
+            }else{
+                $this->code = 404;
+                return ["error" => [
+                    "type" => "not_in_sample"
+                ]];
+            }
+        }else{
+            $this->code = 500;
             return ["error" => [
-                "type" => "not_in_sample"
+                "type" => "fatal_error"
             ]];
-            
         }
-        return $data;
+    }
+    private function getAll($db):array
+    {
+        $sql = "SELECT * FROM sample_table";
+        $sth = $db->pdo()->prepare($sql);
+        $res = $sth->execute();
+        if($res){
+            return $sth->fetchAll(PDO::FETCH_ASSOC);
+        }else{
+            $this->code = 500;
+            return ["error" => [
+                "type" => "fatal_error"
+            ]];
+        }
     }
 
     public function post():array
     {
-        $post = json_decode(mb_convert_encoding(file_get_contents('php://input'),"UTF8","ASCII,JIS,UTF-8,EUC-JP,SJIS-WIN"),true);
-        if(!array_key_exists("id",$post)){
+        $post = $this->request_body;
+        if(!array_key_exists("id",$post) || !array_key_exists("name",$post) || !array_key_exists("age",$post)){
             $this->code = 400;
             return ["error" => [
                 "type" => "invalid_param"
@@ -40,25 +72,28 @@ class SampleController
         }
         $db = new DB();
         $pdo = $db->pdo();
-        $sql = "INSERT INTO sample_table (id) VALUES (:id)";
+        $sql = "INSERT INTO sample_table (id, name, age) VALUES (:id, :name, :age)";
         $sth = $pdo->prepare($sql);
         $sth->bindValue(":id",$post["id"]);
+        $sth->bindValue(":name",$post["name"]);
+        $sth->bindValue(":age",$post["age"]);
         $res = $sth->execute();
         $id = $pdo->lastInsertId();
-        if(!$res){
+        if($res){
+            $this->code = 201;
+            header("Location: ".$this->url.$id);
+            return [];
+        }else{
             $this->code = 500;
             return ["error" => [
                 "type" => "fatal_error"
             ]];
         }
-        $this->code = 201;
-        header("Location: ".$this->url.$id);
-        return [];
+        
     }
 
     public function put($id=null):array
     {
-        $put = json_decode(mb_convert_encoding(file_get_contents('php://input'),"UTF8","ASCII,JIS,UTF-8,EUC-JP,SJIS-WIN"),true);
         if(!$this->is_set($id)){
             $this->code = 400;
             return ["error" => [
@@ -66,26 +101,29 @@ class SampleController
             ]];
         }
         $original_data = $this->get($id);
-        if(empty($origin_data)){
+        if(empty($original_data)){
             $this->code = 404;
             return ["error" => [
                 "type" => "not_in_sample"
             ]];
         }
-        $put = array_merge($original_data, $put);
+        $put = array_merge($original_data, $this->request_body);
         $db = new DB();
-        $sql = "UPDATE sample_table value=:value WHERE id=:id";
+        $sql = "UPDATE sample_table SET name=:name,age=:age WHERE id=:id";
         $sth = $db->pdo()->prepare($sql);
-        $sth->bindValue(":value",$put["value"]);
-        $sth->bindValue(":id",$put["id"]);
+        $sth->bindValue(":id",$id);
+        $sth->bindValue(":name",$put["name"]);
+        $sth->bindValue(":age",$put["age"]);
         $res = $sth->execute();
-        if(!$res){
+        if($res){
+            return [$this->get($id)];
+        }else{
             $this->code = 500;
             return ["error" => [
                 "type" => "fatal_error"
             ]];
         }
-        return [$this->get($id)[0]];
+        
     }
 
     public function delete($id=null):array
@@ -101,17 +139,18 @@ class SampleController
         $sth = $db->pdo()->prepare($sql);
         $sth->bindValue(":id",$id);
         $res = $sth->execute();
-        if(!$res){
+        if($res){
+            $this->code = 204;
+            return [];
+        }else{
             $this->code = 500;
             return ["error" => [
                 "type" => "fatal_error"
             ]];
         }
-        $this->code = 204;
-        return [];
     }
 
-    public function options()
+    public function options():array
     {
         header("Access-Control-Allow-Methods: OPTIONS,GET,HEAD,POST,PUT,DELETE");
         header("Access-Control-Allow-Headers: Content-Type");

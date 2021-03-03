@@ -14,26 +14,10 @@ class DB
             ];
             $pdo = new PDO($setting["dsn"],$setting["user"],$setting["password"],$driver_option);
         }catch(PDOException $error){
-            echo "error:".$error->getMessage();
+            header("Content-Type: application/json; charset=utf-8", true, 500);
+            echo json_encode(["error" => ["type" => "server_error","message"=>$error->getMessage()]]);
             die();
         }
         return $pdo;
-    }
-
-    function select($sql)
-    {
-        $pdo = $this->pdo();
-        $sth = $pdo->prepare($sql);
-        $sth->execute();
-        return $sth->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    function select_for_id($sql, $id)
-    {
-        $pdo = $this->pdo();
-        $sth = $pdo->prepare($sql);
-        $sth->bindValue(":id",$id);
-        $sth->execute();
-        return $sth->fetch(PDO::FETCH_ASSOC);
     }
 }
