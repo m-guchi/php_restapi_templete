@@ -63,7 +63,7 @@ class SampleController
     public function post():array
     {
         $post = $this->request_body;
-        if(!array_key_exists("id",$post) || !array_key_exists("name",$post) || !array_key_exists("age",$post)){
+        if(!array_key_exists("id",$post) || !array_key_exists("name",$post)){
             $this->code = 400;
             return ["error" => [
                 "type" => "invalid_param"
@@ -77,10 +77,10 @@ class SampleController
         $sth->bindValue(":name",$post["name"]);
         $sth->bindValue(":age",$post["age"]);
         $res = $sth->execute();
-        $id = $pdo->lastInsertId();
+        // $id = $pdo->lastInsertId();
         if($res){
             $this->code = 201;
-            header("Location: ".$this->url.$id);
+            header("Location: ".$this->url.$post["id"]);
             return [];
         }else{
             $this->code = 500;
@@ -88,7 +88,6 @@ class SampleController
                 "type" => "fatal_error"
             ]];
         }
-        
     }
 
     public function put($id=null):array
@@ -122,7 +121,6 @@ class SampleController
                 "type" => "fatal_error"
             ]];
         }
-        
     }
 
     public function delete($id=null):array
@@ -151,7 +149,7 @@ class SampleController
 
     public function options():array
     {
-        header("Access-Control-Allow-Methods: OPTIONS,GET,HEAD,POST,PUT,DELETE");
+        header("Access-Control-Allow-Methods: OPTIONS,GET,POST,PUT,DELETE");
         header("Access-Control-Allow-Headers: Content-Type");
         return [];
     }
