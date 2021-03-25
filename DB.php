@@ -4,7 +4,14 @@ include(__DIR__ . "/config/database.php");
 
 class DB
 {
-    function pdo()
+    public $pdo;
+
+    public function __construct()
+    {
+        $this->pdo = $this->pdo();
+    }
+
+    public function pdo()
     {
         global $setting;
         try{

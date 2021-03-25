@@ -1,6 +1,8 @@
 <?php
 
-include(__DIR__ . "/../DB.php");
+include(__DIR__ . "/../../DB.php");
+
+date_default_timezone_set('Asia/Tokyo');
 
 preg_match('|'.dirname($_SERVER["SCRIPT_NAME"]).'/([\w%/]*)|', $_SERVER["REQUEST_URI"], $matches);
 $paths = explode('/',$matches[1]);
@@ -12,8 +14,14 @@ if(file_exists($file_path)){
     $class_name = ucfirst($file)."Controller";
     $method_name = strtolower($_SERVER["REQUEST_METHOD"]);
     $object = new $class_name();
-    $response = json_encode($object->$method_name(...$paths));
-    $response_code = $object->code ?? 200;
+    $method = $method_name==="head" ? "get": $method_name;
+    if(method_exists($object, $method)){
+        $response = json_encode($object->$method(...$paths));
+        $response_code = $object->code ?? 200;
+    }else{
+        $response = json_encode(["error"=>["type"=>"method_not_allowed"]]);
+        $response_code = 405;
+    }
     // header("Access-Control-Allow-Origin: *");
     header("Content-Type: application/json; charset=utf-8", true, $response_code);
     echo $response;
